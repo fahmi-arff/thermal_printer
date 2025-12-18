@@ -218,19 +218,35 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
             call.method.equals("getBluetoothList") -> {
                 isBle = false
                 isScan = true
-                if (verifyIsBluetoothIsOn()) {
-                    bluetoothService.cleanHandlerBtBle()
-                    bluetoothService.scanBluDevice(channel)
-                    result.success(null)
+                if (!verifyIsBluetoothIsOn()) {
+                    val activity = currentActivity
+                    val errorDetails = if (activity == null) "CURRENT_ACTIVITY_NULL" else "PERMISSION_NOT_GRANTED"
+                    result.error(
+                        "BLUETOOTH_PERMISSION_ERROR",
+                        "Unable to start Bluetooth scan: missing activity or permissions",
+                        errorDetails
+                    )
+                    return
                 }
+                bluetoothService.cleanHandlerBtBle()
+                bluetoothService.scanBluDevice(channel)
+                result.success(null)
             }
             call.method.equals("getBluetoothLeList") -> {
                 isBle = true
                 isScan = true
-                if (verifyIsBluetoothIsOn()) {
-                    bluetoothService.scanBleDevice(channel)
-                    result.success(null)
+                if (!verifyIsBluetoothIsOn()) {
+                    val activity = currentActivity
+                    val errorDetails = if (activity == null) "CURRENT_ACTIVITY_NULL" else "PERMISSION_NOT_GRANTED"
+                    result.error(
+                        "BLUETOOTH_PERMISSION_ERROR",
+                        "Unable to start BLE scan: missing activity or permissions",
+                        errorDetails
+                    )
+                    return
                 }
+                bluetoothService.scanBleDevice(channel)
+                result.success(null)
             }
 
             call.method.equals("onStartConnection") -> {
