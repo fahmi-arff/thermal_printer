@@ -235,14 +235,23 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
 
             call.method.equals("onStartConnection") -> {
                 val address: String? = call.argument("address")
-                val isBle: Boolean? = call.argument("isBle")
+                val isBle: Boolean = call.argument<Boolean>("isBle") ?: false
                 val autoConnect: Boolean = if (call.hasArgument("autoConnect")) call.argument("autoConnect")!! else false
-                if (verifyIsBluetoothIsOn()) {
-                    bluetoothService.setHandler(bluetoothHandler)
-                    bluetoothService.onStartConnection(context!!, address!!, result, isBle = isBle!!, autoConnect = autoConnect)
-                } else {
-                    result.success(false)
+                if (address.isNullOrEmpty()) {
+                    result.error("INVALID_ADDRESS", "Bluetooth address is null or empty", null)
+                    return
                 }
+                val safeContext = context
+                if (safeContext == null) {
+                    result.error("NO_CONTEXT", "Android context is not available", null)
+                    return
+                }
+                if (!verifyIsBluetoothIsOn()) {
+                    result.success(false)
+                    return
+                }
+                bluetoothService.setHandler(bluetoothHandler)
+                bluetoothService.onStartConnection(safeContext, address, result, isBle = isBle, autoConnect = autoConnect)
             }
 
             call.method.equals("disconnect") -> {
@@ -390,7 +399,12 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
         }
 
         if (!hasPermissions(context, *permissions.toTypedArray())) {
-            ActivityCompat.requestPermissions(currentActivity!!, permissions.toTypedArray(), PERMISSION_ALL)
+            val activity = currentActivity
+            if (activity == null) {
+                Log.w(TAG, "Cannot request permissions because currentActivity is null")
+                return false
+            }
+            ActivityCompat.requestPermissions(activity, permissions.toTypedArray(), PERMISSION_ALL)
             return false
         }
         return true
