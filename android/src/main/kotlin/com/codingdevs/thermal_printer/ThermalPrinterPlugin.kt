@@ -403,23 +403,19 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
     }
 
     private fun checkPermissions(): Boolean {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-//            Manifest.permission.BLUETOOTH,
-//            Manifest.permission.BLUETOOTH_ADMIN,
-        )
+        val permissions = mutableListOf<String>()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ → hanya butuh Bluetooth Scan & Connect
             permissions.add(Manifest.permission.BLUETOOTH_SCAN)
             permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            // Di bawah Android 12: gunakan Location untuk discovery
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
         if (!hasPermissions(context, *permissions.toTypedArray())) {
-            val activity = currentActivity
-            if (activity == null) {
-                Log.w(TAG, "Cannot request permissions because currentActivity is null")
-                return false
-            }
+            val activity = currentActivity ?: return false
             ActivityCompat.requestPermissions(activity, permissions.toTypedArray(), PERMISSION_ALL)
             return false
         }
