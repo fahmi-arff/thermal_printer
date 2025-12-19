@@ -414,12 +414,9 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
-        if (!hasPermissions(context, *permissions.toTypedArray())) {
-            val activity = currentActivity ?: return false
-            ActivityCompat.requestPermissions(activity, permissions.toTypedArray(), PERMISSION_ALL)
-            return false
-        }
-        return true
+        // Jangan lagi minta permission dari plugin.
+        // Asumsikan aplikasi Flutter sudah menangani runtime permission sendiri.
+        return hasPermissions(context, *permissions.toTypedArray())
     }
 
     private fun hasPermissions(context: Context?, vararg permissions: String?): Boolean {
