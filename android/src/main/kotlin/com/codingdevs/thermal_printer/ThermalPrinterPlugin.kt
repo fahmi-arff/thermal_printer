@@ -257,7 +257,7 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
                     result.error("INVALID_ADDRESS", "Bluetooth address is null or empty", null)
                     return
                 }
-                val safeContext = context
+                val safeContext = resolveContext()
                 if (safeContext == null) {
                     result.error("NO_CONTEXT", "Android context is not available", null)
                     return
@@ -416,7 +416,7 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
 
         // Jangan lagi minta permission dari plugin.
         // Asumsikan aplikasi Flutter sudah menangani runtime permission sendiri.
-        return hasPermissions(context, *permissions.toTypedArray())
+        return hasPermissions(resolveContext(), *permissions.toTypedArray())
     }
 
     private fun hasPermissions(context: Context?, vararg permissions: String?): Boolean {
@@ -430,9 +430,14 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
         return true
     }
 
+    private fun resolveContext(): Context? {
+        return context ?: currentActivity?.applicationContext
+    }
+
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         currentActivity = binding.activity
+        context = binding.activity.applicationContext
         binding.addRequestPermissionsResultListener(this)
         binding.addActivityResultListener(this)
         bluetoothService.setActivity(currentActivity)
@@ -445,6 +450,7 @@ class ThermalPrinterPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Re
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         currentActivity = binding.activity
+        context = binding.activity.applicationContext
         binding.addRequestPermissionsResultListener(this)
         binding.addActivityResultListener(this)
         bluetoothService.setActivity(currentActivity)
